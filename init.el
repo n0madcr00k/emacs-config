@@ -34,9 +34,9 @@
 ;; Colors – Solarized Dark
 ;; (you can change to 'solarized-light if you hate darkness)
 (use-package solarized-theme
-  :ensure t
-  :config
-  (load-theme 'solarized-dark t))
+             :ensure t
+             :config
+             (load-theme 'solarized-dark t))
 
 ;; Optional: nicer line spacing and subtle line highlight
 (setq-default line-spacing 2)
