@@ -1,0 +1,53 @@
+# ===== Emacs junk =====
+# Backups, autosaves, lockfiles
+*~
+\#*\#
+.\#*
+
+# Compiled elisp
+*.elc
+*.eln
+
+# Package archives and caches
+elpa/
+eln-cache/
+var/
+straight/
+eshell/history
+transient/
+url/
+auto-save-list/
+tramp/
+
+# Customize and GUI crap
+custom.el
+network-security.data
+
+# Temporary sessions
+bookmarks
+recentf
+projectile-bookmarks.eld
+projects
+desktop
+savehist
+places
+session.*
+
+# Org-mode generated crap (if you export)
+*.org-id-locations
+*.org_archive
+
+# LSP / completion backends
+.lsp-session-v1
+eglot-history
+company-statistics-cache.el
+
+# Doom / Spacemacs (if you ever go there)
+.env
+*.local
+.cache/
+logs/
+sessions/
+
+# macOS / editor cruft
+.DS_Store
