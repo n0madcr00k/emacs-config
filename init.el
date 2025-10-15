@@ -98,6 +98,7 @@
 
 ;; magit
 (use-package magit :ensure t)
+(setq magit-view-git-manual-method 'woman)
 
 ;; Eglot servers setup
 (use-package eglot
@@ -153,9 +154,6 @@
   :init (corfu-popupinfo-mode 1)
   :custom
   (corfu-popupinfo-delay 0.1))
-
-;; magit
-(setq magit-view-git-manual-method 'woman)
 
 ;; BBDB
 (use-package bbdb :ensure t)
