@@ -110,8 +110,6 @@
   (add-to-list 'eglot-server-programs
                '((scala-mode) . ("metals-emacs"))))
 
-;; WARNING: dangerous. Nuke Eglot confirmations globally
-
 ;; Completion UI: Corfu
 (use-package corfu
   :ensure t
