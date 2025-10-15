@@ -85,10 +85,10 @@
   (put 'dired-find-alternate-file 'disabled nil)
   :bind
   (:map dired-mode-map
-        ("RET" . egorpe/dired-open)
+        ("RET" . n0mad/dired-open)
         ("^"   . (lambda () (interactive) (find-alternate-file "..")))))
 
-(defun egorpe/dired-open ()
+(defun n0mad/dired-open ()
   "Open file or directory in Dired. Directories reuse buffer, files open normally."
   (interactive)
   (let ((file (dired-get-file-for-visit)))
