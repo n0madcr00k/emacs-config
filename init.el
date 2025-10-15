@@ -24,7 +24,10 @@
 
 ;; Enable the goodness
 (global-auto-revert-mode t)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (unless (string= (buffer-name) "*scratch*")
+              (display-line-numbers-mode))))
 
 ;; UTF-8 everywhere
 (set-charset-priority 'unicode)
@@ -37,7 +40,7 @@
 ;; Font (larger, easy to read)
 (set-face-attribute 'default nil
                     :family "JetBrains Mono NL"
-                    :height 160)  ;; 100 = 10pt, adjust to taste
+                    :height 180)  ;; 100 = 10pt, adjust to taste
 
 ;; Bootstrap use-package
 (setq package-install-upgrade-built-in t)
@@ -72,38 +75,92 @@
 (unless (server-running-p)
   (server-start))
 
-;; Nerd icons
-(use-package all-the-icons
-  :ensure t
-  :if (display-graphic-p))
+;; Make dired behave like I want
 
-;; dirvish - modern dired
-(use-package dirvish
-  :ensure t
-  :init (dirvish-override-dired-mode))
-(setq dirvish-attributes
-      (append
-       '(vc-state subtree-state all-the-icons collapse)
-       '(file-modes file-time file-size)))
-(setq dirvish-header-line-format
-      '(:left (path) :right (free-space))
-      dirvish-mode-line-format
-      '(:left (sort symlink) :right (omit yank index)))
-;; Enable extensions
-(with-eval-after-load 'dirvish
-  (let* ((dirvish-dir (file-name-directory (locate-library "dirvish")))
-         (ext-dir     (expand-file-name "extensions" dirvish-dir)))
-    (when (file-directory-p ext-dir)
-      (add-to-list 'load-path ext-dir))))
-;; Enable subtree expalsion
-(use-package dirvish-subtree
-  :after dirvish
-  :bind (:map dirvish-mode-map
-              ("<tab>" . dirvish-subtree-toggle)))  ;; expand/collapse node
+;; Single-buffer Dired, but files open in their own buffer
+(use-package dired
+  :ensure nil ;; built-in
+  :commands (dired)
+  :config
+  (put 'dired-find-alternate-file 'disabled nil)
+  :bind
+  (:map dired-mode-map
+        ("RET" . egorpe/dired-open)
+        ("^"   . (lambda () (interactive) (find-alternate-file "..")))))
+
+(defun egorpe/dired-open ()
+  "Open file or directory in Dired. Directories reuse buffer, files open normally."
+  (interactive)
+  (let ((file (dired-get-file-for-visit)))
+    (if (file-directory-p file)
+        (dired-find-alternate-file)
+      (dired-find-file))))
 
 ;; magit
 (use-package magit :ensure t)
+
+;; Eglot servers setup
+(use-package eglot
+  :ensure nil
+  :config
+  ;; Python
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio")))
+  ;; Scala
+  (add-to-list 'eglot-server-programs
+               '((scala-mode) . ("metals-emacs"))))
+
+;; WARNING: dangerous. Nuke Eglot confirmations globally
+
+;; Completion UI: Corfu
+(use-package corfu
+  :ensure t
+  :init
+  (global-corfu-mode)
+  :custom
+  (corfu-auto t)                      ;; auto popup
+  (corfu-auto-delay 0.05)
+  (corfu-auto-prefix 2)
+  (corfu-quit-no-match 'separator)    ;; don't kill popup too eagerly
+  (corfu-preselect 'prompt)           ;; keep predictable
+  (corfu-on-exact-match nil)
+  (corfu-scroll-margin 2)
+  :bind
+  (:map corfu-map
+        ("M-j" . corfu-next)
+        ("M-k" . corfu-previous)
+        ("C-j" . corfu-insert)
+        ("RET" . corfu-insert)))
+
+;; Make sure we don't force TAB to complete
+(setq tab-always-indent t)
+
+;; Orderless matching (way nicer than basic/flex)
+(use-package orderless
+  :ensure t
+  :init
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        ;; Files often work better without orderless.
+        completion-category-overrides '((file (styles basic)))
+        ;; Make sure Eglot completions use orderless
+        ;; (Eglot's CAPF uses the 'eglot category)
+        )
+  (add-to-list 'completion-category-overrides '(eglot (styles orderless))))
+
+;; Show docs/signatures in the popup
+(use-package corfu-popupinfo
+  :ensure nil
+  :after corfu
+  :init (corfu-popupinfo-mode 1)
+  :custom
+  (corfu-popupinfo-delay 0.1))
+
+;; magit
 (setq magit-view-git-manual-method 'woman)
+
+;; BBDB
+(use-package bbdb :ensure t)
 
 ;; org-mode shenanigans
 (setq org-directory "~/org")
@@ -114,6 +171,16 @@
 (use-package yaml-mode :ensure t)
 (use-package toml-mode :ensure t)
 
-;; scala-mode for .scala/.sbt
+;; Containers hell
+(use-package dockerfile-mode :ensure t)
+
+;; Python support is a must
+(use-package python
+  :ensure nil
+  :hook ((python-mode . eglot-ensure)
+         (python-ts-mode . eglot-ensure)))
+
+;; Scala support
 (use-package scala-mode :ensure t
-  :mode "\\.s\\(cala\\|bt\\)\\'")
+  :mode "\\.s\\(cala\\|bt\\)\\'"
+  :hook ((scala-mode . eglot-ensure)))
