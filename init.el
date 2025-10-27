@@ -28,6 +28,15 @@
           (lambda ()
             (unless (string= (buffer-name) "*scratch*")
               (display-line-numbers-mode))))
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(setq ibuffer-use-other-window nil)
+(add-hook 'ibuffer-mode-hook
+          (lambda()
+            (define-key ibuffer-mode-map (kbd "RET")
+                        (lambda()
+                          (interactive)
+                          (ibuffer-visit-buffer)
+                          (kill-buffer "*Ibuffer*")))))
 
 ;; UTF-8 everywhere
 (set-charset-priority 'unicode)
@@ -40,7 +49,7 @@
 ;; Font (larger, easy to read)
 (set-face-attribute 'default nil
                     :family "JetBrains Mono NL"
-                    :height 180)  ;; 100 = 10pt, adjust to taste
+                    :height 160)  ;; 100 = 10pt, adjust to taste
 
 ;; Bootstrap use-package
 (setq package-install-upgrade-built-in t)
@@ -59,6 +68,17 @@
   :config
   (load-theme 'solarized-dark t))
 
+;; Remove annoying underline in mode line
+(custom-set-faces
+ '(mode-line ((t (:box nil :overline nil :underline nil))))
+ '(mode-line-inactive ((t (:box nil :overline nil :underline nil)))))
+
+;; Enable ANSI colours handling in buffers
+(use-package ansi-color :ensure nil)
+(defun display-ansi-colors ()
+  (interactive)
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
 ;; Nicer line spacing and subtle line highlight
 (setq-default line-spacing 2)
 (global-hl-line-mode 1)
@@ -69,6 +89,12 @@
 
 ;; No custom garbage in config
 (setq custom-file null-device)
+
+;; Setting up PATH
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize))
 
 ;; Start server
 (require 'server)
@@ -159,9 +185,13 @@
 (use-package bbdb :ensure t)
 
 ;; org-mode shenanigans
-(setq org-directory "~/org")
+(use-package org
+  :ensure nil
+  :init
+  (setq org-directory "~/org"))
 
 ;; Markup circus I can't avoid
+(use-package csv-mode :ensure t)
 (use-package markdown-mode :ensure t)
 (use-package json-mode :ensure t)
 (use-package yaml-mode :ensure t)
@@ -177,6 +207,20 @@
          (python-ts-mode . eglot-ensure)))
 
 ;; Scala support
-(use-package scala-mode :ensure t
-  :mode "\\.s\\(cala\\|bt\\)\\'"
+(use-package scala-mode
+  :ensure t
+  :interpreter ("scala" . scala-mode)
   :hook ((scala-mode . eglot-ensure)))
+
+(use-package sbt-mode
+  :ensure t
+  :commands sbt-start sbt-command
+  :config
+  ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
+  ;; allows using SPACE when in the minibuffer
+  (substitute-key-definition
+   'minibuffer-complete-word
+   'self-insert-command
+   minibuffer-local-completion-map)
+  ;; sbt-supershell kills sbt-mode:  https://github.com/hvesalai/emacs-sbt-mode/issues/152
+  (setq sbt:program-options '("-Dsbt.supershell=false")))
