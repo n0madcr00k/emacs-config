@@ -48,7 +48,7 @@
 
 ;; Font (larger, easy to read)
 (set-face-attribute 'default nil
-                    :family "JetBrains Mono NL"
+                    :family "JetBrainsMonoNL Nerd Font"
                     :height 160)  ;; 100 = 10pt, adjust to taste
 
 ;; Bootstrap use-package

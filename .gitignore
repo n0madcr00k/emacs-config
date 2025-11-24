@@ -14,6 +14,7 @@ eln-cache/
 var/
 straight/
 eshell/history
+eshell/lastdir
 transient/
 url/
 auto-save-list/
