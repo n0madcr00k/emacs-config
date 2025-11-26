@@ -1,5 +1,5 @@
 # emacs-config
 
-My EMACS cofiguration
+My EMACS cofiguration.
 
 `< n0mad :: realitycrash.net >`
