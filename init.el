@@ -111,16 +111,67 @@
   (put 'dired-find-alternate-file 'disabled nil)
   :bind
   (:map dired-mode-map
-        ("RET" . n0mad/dired-open)
+        ("RET" . rc/dired-open)
         ("^"   . (lambda () (interactive) (find-alternate-file "..")))))
 
-(defun n0mad/dired-open ()
+(defun rc/dired-open ()
   "Open file or directory in Dired. Directories reuse buffer, files open normally."
   (interactive)
   (let ((file (dired-get-file-for-visit)))
     (if (file-directory-p file)
         (dired-find-alternate-file)
       (dired-find-file))))
+
+;; vterm setup
+(use-package vterm
+  :ensure t
+  :commands (vterm vterm-other-window)
+  :config
+  (setq vterm-max-scrollback 100000)
+  ;; Less stupid key handling inside vterm
+  (define-key vterm-mode-map (kbd "C-c C-j") #'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "C-c C-k") #'vterm-copy-mode-done))
+
+;; Use ssh for TRAMP by default
+(with-eval-after-load 'tramp
+  (setq tramp-default-method "ssh"))
+
+;; Project-root aware vterm
+(defun rc/project-root ()
+  "Return project root or `default-directory`."
+  (if-let ((proj (project-current)))
+      (project-root proj)
+    default-directory))
+
+(defun rc/project-vterm ()
+  "Open a vterm at the project root."
+  (interactive)
+  (let* ((default-directory (rc/project-root))
+         (buf-name (format "*vterm: %s*" (file-name-nondirectory
+                                          (directory-file-name default-directory)))))
+    (if (get-buffer buf-name)
+        (pop-to-buffer buf-name)
+      (progn
+        (vterm)
+        (rename-buffer buf-name)))))
+
+(global-set-key (kbd "C-c t") #'rc/project-vterm)
+
+;; Quickly open remote file via TRAMP
+(defun rc/find-remote (host path)
+  "Open PATH on HOST using TRAMP /ssh:HOST:PATH."
+  (interactive "sHost: \nFPath on host: ")
+  (find-file (format "/ssh:%s:%s" host path)))
+
+;; Optional: function to quickly open a 'dev notes' org file per project
+(defun rc/project-notes ()
+  "Open notes.org in project root."
+  (interactive)
+  (let* ((root (rc/project-root))
+         (notes (expand-file-name "notes.org" root)))
+    (find-file notes)))
+
+(global-set-key (kbd "C-c n") #'rc/project-notes)
 
 ;; magit
 (use-package magit :ensure t)
